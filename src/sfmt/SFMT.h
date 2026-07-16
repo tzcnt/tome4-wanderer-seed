@@ -34,44 +34,44 @@
 #include <stdio.h>
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-  #include <inttypes.h>
+#include <inttypes.h>
 #elif defined(_MSC_VER)
-  typedef unsigned int uint32_t;
-  typedef unsigned long long uint64_t;
-  #define inline
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+#define inline
 #else
-  #include <inttypes.h>
-  #if defined(__GNUC__)
-    #define inline __inline__
-  #endif
+#include <inttypes.h>
+#if defined(__GNUC__)
+#define inline __inline__
+#endif
 #endif
 
 #ifndef PRIu64
-  #if defined(_MSC_VER)
-    #define PRIu64 "I64u"
-    #define PRIx64 "I64x"
-  #else
-    #define PRIu64 "llu"
-    #define PRIx64 "llx"
-  #endif
+#if defined(_MSC_VER)
+#define PRIu64 "I64u"
+#define PRIx64 "I64x"
+#else
+#define PRIu64 "llu"
+#define PRIx64 "llx"
+#endif
 #endif
 
 #ifndef __APPLE__
 inline
 #endif
-uint32_t gen_rand32(void);
+    uint32_t gen_rand32(void);
 #ifndef __APPLE__
 inline
 #endif
-uint64_t gen_rand64(void);
+    uint64_t gen_rand64(void);
 #ifndef __APPLE__
 inline
 #endif
-void fill_array32(uint32_t array[], int size);
+    void fill_array32(uint32_t array[], int size);
 #ifndef __APPLE__
 inline
 #endif
-void fill_array64(uint64_t array[], int size);
+    void fill_array64(uint64_t array[], int size);
 void init_gen_rand(uint32_t seed);
 void init_by_array(uint32_t init_key[], int key_length);
 char *get_idstring(void);
@@ -81,60 +81,43 @@ uint32_t rand_div(uint32_t m);
 
 /* These real versions are due to Isaku Wada */
 /** generates a random number on [0,1]-real-interval */
-inline static double to_real1(uint32_t v)
-{
-    return v * (1.0/4294967295.0);
-    /* divided by 2^32-1 */
+inline static double to_real1(uint32_t v) {
+  return v * (1.0 / 4294967295.0);
+  /* divided by 2^32-1 */
 }
 
 /** generates a random number on [0,1]-real-interval */
-inline static double genrand_real1(void)
-{
-    return to_real1(gen_rand32());
-}
+inline static double genrand_real1(void) { return to_real1(gen_rand32()); }
 
 /** generates a random number on [-1,1]-real-interval */
-inline static double genrand_real(double min, double max)
-{
-    return gen_rand32() * ((max-min)/4294967295.0)+min;
+inline static double genrand_real(double min, double max) {
+  return gen_rand32() * ((max - min) / 4294967295.0) + min;
 }
 
 /** generates a random number on [0,1)-real-interval */
-inline static double to_real2(uint32_t v)
-{
-    return v * (1.0/4294967296.0);
-    /* divided by 2^32 */
+inline static double to_real2(uint32_t v) {
+  return v * (1.0 / 4294967296.0);
+  /* divided by 2^32 */
 }
 
 /** generates a random number on [0,1)-real-interval */
-inline static double genrand_real2(void)
-{
-    return to_real2(gen_rand32());
+inline static double genrand_real2(void) { return to_real2(gen_rand32()); }
+
+/** generates a random number on (0,1)-real-interval */
+inline static double to_real3(uint32_t v) {
+  return (((double)v) + 0.5) * (1.0 / 4294967296.0);
+  /* divided by 2^32 */
 }
 
 /** generates a random number on (0,1)-real-interval */
-inline static double to_real3(uint32_t v)
-{
-    return (((double)v) + 0.5)*(1.0/4294967296.0);
-    /* divided by 2^32 */
-}
-
-/** generates a random number on (0,1)-real-interval */
-inline static double genrand_real3(void)
-{
-    return to_real3(gen_rand32());
-}
+inline static double genrand_real3(void) { return to_real3(gen_rand32()); }
 /** These real versions are due to Isaku Wada */
 
 /** generates a random number on [0,1) with 53-bit resolution*/
-inline static double to_res53(uint64_t v)
-{
-    return v * (1.0/18446744073709551616.0L);
+inline static double to_res53(uint64_t v) {
+  return v * (1.0 / 18446744073709551616.0L);
 }
 
 /** generates a random number on [0,1) with 53-bit resolution*/
-inline static double genrand_res53(void)
-{
-    return to_res53(gen_rand64());
-}
+inline static double genrand_res53(void) { return to_res53(gen_rand64()); }
 #endif

@@ -3,7 +3,9 @@
 A C++17 command-line tool that brute-force searches for [Tales of Maj'Eyal](https://te4.org) (ToME)
 **Wanderer** class game seeds whose talent-tree unlock order matches user-defined criteria. It
 reimplements the game's Lua-based SFMT-19937 PRNG and Fisher–Yates shuffle to deterministically
-predict the talent trees a Wanderer will unlock for any given seed — without launching the game.
+predict the talent trees a Wanderer will unlock for any given seed, without launching the game.
+
+Last updated for game version 1.7.6.
 
 ## Build
 
@@ -19,12 +21,12 @@ Or use the helper: `./run.sh` (build + generate) / `./run.sh search` (build + se
 
 ## Configuration
 
-- **`unlocks.json`** — your account's unlock profile: which subclasses and trees are unlocked,
+- **`unlocks.json`** - your account's unlock profile: which subclasses and trees are unlocked,
   whether the character is a Dwarf, the ToME version, and installed addon versions. Set an entry to
   `false` to simulate a profile that hasn't unlocked it yet. Addons/DLC affect both the seed
   fingerprint and the pool of possible trees, so this must match your game for predictions to be
   correct.
-- **`rules.json`** — search criteria: a list of `level_ranges`, each requiring
+- **`rules.json`** - search criteria: a list of `level_ranges`, each requiring
   that one of the listed `talents` be unlocked within the `[min, max]` level window. A seed matches
   only if every range is satisfied.
 
@@ -45,9 +47,9 @@ Or use the helper: `./run.sh` (build + generate) / `./run.sh search` (build + se
 The Wanderer class in ToME derives its randomized talent trees from the game seed. This tool
 reimplements that derivation exactly:
 
-- **SFMT-19937** — the same PRNG ToME uses (vendored, C).
-- **Fisher–Yates shuffle** — matches Lua's `table.shuffle` step for step.
-- **Seed fingerprint** — an MD5-based addon fingerprint reproduces the game's `<seed>-<hash>`
+- **SFMT-19937** - the same PRNG ToME uses (vendored, C).
+- **Fisher–Yates shuffle** - matches Lua's `table.shuffle` step for step.
+- **Seed fingerprint** - an MD5-based addon fingerprint reproduces the game's `<seed>-<hash>`
   seed-string format, so predictions line up with what the game actually rolls for your installed
   addon/DLC set.
 
@@ -72,7 +74,7 @@ t-engine4/               game engine, as a git submodule (reference only)
 
 `t-engine4/` points at the open-source T-Engine4 / ToME engine
 (`https://git.net-core.org/tome/t-engine4.git`), pinned as a submodule purely as a reference for the
-reimplemented algorithms — it is **not** required to build or run this tool. To fetch the engine
+reimplemented algorithms - it is **not** required to build or run this tool. To fetch the engine
 source locally:
 
 ```sh
@@ -87,7 +89,7 @@ distributed under the same terms.
 
 Vendored third-party code retains its original licenses:
 
-- **SFMT** (`src/sfmt/`) — © 2006–2007 Mutsuo Saito, Makoto Matsumoto and Hiroshima University.
+- **SFMT** (`src/sfmt/`) - © 2006–2007 Mutsuo Saito, Makoto Matsumoto and Hiroshima University.
   New BSD License.
-- **MD5** (`src/md5.{c,h}`) — from the Lua `md5` library by Marcela Ozorio Suarez /
+- **MD5** (`src/md5.{c,h}`) - from the Lua `md5` library by Marcela Ozorio Suarez /
   Roberto Ierusalimschy et al. (MIT License).

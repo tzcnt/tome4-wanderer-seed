@@ -9,165 +9,166 @@
 // All other talent trees referenced by subclasses are class trees.
 //
 // Derived from newTalentType definitions in game/modules/tome/data/talents/*/
-inline bool is_generic_tree(const std::string& id) {
-    static const std::unordered_set<std::string> generics = {
-        "celestial/chants",
-        "celestial/hymns",
-        "celestial/light",
-        "chronomancy/chronomancy",
-        "chronomancy/energy",
-        "chronomancy/fate-weaving",
-        "chronomancy/spacetime-weaving",
-        "corruption/curses",
-        "corruption/hexes",
-        "corruption/torment",
-        "corruption/black-magic",
-        "corruption/demonic-strength",
-        "corruption/oppression",
-        "corruption/vile-life",
-        "cunning/lethality",
-        "cunning/scoundrel",
-        "cunning/survival",
-        "cursed/cursed-form",
-        "cursed/dark-sustenance",
-        "cursed/gestures",
-        "demented/beyond-sanity",
-        "demented/calamity",
-        "demented/doom",
-        "psionic/augmented-mobility",
-        "psionic/dream-forge",
-        "psionic/dreaming",
-        "psionic/feedback",
-        "psionic/finer-energy-manipulations",
-        "psionic/mentalism",
-        "spell/aegis",
-        "spell/conveyance",
-        "spell/divination",
-        "spell/necrosis",
-        "spell/spectre",
-        "spell/staff-combat",
-        "spell/stone-alchemy",
-        "steamtech/blacksmith",
-        "steamtech/chemistry",
-        "steamtech/engineering",
-        "steamtech/physics",
-        "technique/combat-training",
-        "technique/conditioning",
-        "technique/mobility",
-        "technique/thuggery",
-        "technique/unarmed-training",
-        "wild-gift/antimagic",
-        "wild-gift/call",
-        "wild-gift/fungus",
-        "wild-gift/harmony",
-        "wild-gift/mindstar-mastery",
-    };
-    return generics.count(id) > 0;
+inline bool is_generic_tree(const std::string &id) {
+  static const std::unordered_set<std::string> generics = {
+      "celestial/chants",
+      "celestial/hymns",
+      "celestial/light",
+      "chronomancy/chronomancy",
+      "chronomancy/energy",
+      "chronomancy/fate-weaving",
+      "chronomancy/spacetime-weaving",
+      "corruption/curses",
+      "corruption/hexes",
+      "corruption/torment",
+      "corruption/black-magic",
+      "corruption/demonic-strength",
+      "corruption/oppression",
+      "corruption/vile-life",
+      "cunning/lethality",
+      "cunning/scoundrel",
+      "cunning/survival",
+      "cursed/cursed-form",
+      "cursed/dark-sustenance",
+      "cursed/gestures",
+      "demented/beyond-sanity",
+      "demented/calamity",
+      "demented/doom",
+      "psionic/augmented-mobility",
+      "psionic/dream-forge",
+      "psionic/dreaming",
+      "psionic/feedback",
+      "psionic/finer-energy-manipulations",
+      "psionic/mentalism",
+      "spell/aegis",
+      "spell/conveyance",
+      "spell/divination",
+      "spell/necrosis",
+      "spell/spectre",
+      "spell/staff-combat",
+      "spell/stone-alchemy",
+      "steamtech/blacksmith",
+      "steamtech/chemistry",
+      "steamtech/engineering",
+      "steamtech/physics",
+      "technique/combat-training",
+      "technique/conditioning",
+      "technique/mobility",
+      "technique/thuggery",
+      "technique/unarmed-training",
+      "wild-gift/antimagic",
+      "wild-gift/call",
+      "wild-gift/fungus",
+      "wild-gift/harmony",
+      "wild-gift/mindstar-mastery",
+  };
+  return generics.count(id) > 0;
 }
 
 // Returns the addon source for a talent tree ID, matching the game's
 // tt_def.source field.  Trees defined by the base game return "@vanilla@".
 // Trees defined by DLC addons return the addon short_name.
-inline const char* tree_source(const std::string& id) {
-    static const std::unordered_map<std::string, const char*> dlc_trees = {
-        // Ashes of Urh'Rok (newTalentType definitions in data-ashes-urhrok)
-        {"corruption/black-magic",       "ashes-urhrok"},
-        {"corruption/brutality",         "ashes-urhrok"},
-        {"corruption/demonic-pact",      "ashes-urhrok"},
-        {"corruption/demonic-strength",  "ashes-urhrok"},
-        {"corruption/doom-covenant",     "ashes-urhrok"},
-        {"corruption/doom-shield",       "ashes-urhrok"},
-        {"corruption/fearfire",          "ashes-urhrok"},
-        {"corruption/heart-of-fire",     "ashes-urhrok"},
-        {"corruption/infernal-combat",   "ashes-urhrok"},
-        {"corruption/oppression",        "ashes-urhrok"},
-        {"corruption/spellblaze",        "ashes-urhrok"},
-        {"corruption/torture",           "ashes-urhrok"},
-        {"corruption/wrath",             "ashes-urhrok"},
-        // Forbidden Cults (newTalentType definitions in data-cults)
-        {"demented/beyond-sanity",       "cults"},
-        {"demented/calamity",            "cults"},
-        {"demented/chronophage",         "cults"},
-        {"demented/controlled-horrors",   "cults"},
-        {"demented/disfigured-face",     "cults"},
-        {"demented/doom",                "cults"},
-        {"demented/entropy",             "cults"},
-        {"demented/friend-of-the-worm",  "cults"},
-        {"demented/horrific-body",       "cults"},
-        {"demented/madness",             "cults"},
-        {"demented/nether",              "cults"},
-        {"demented/oblivion",            "cults"},
-        {"demented/path-of-horror",      "cults"},
-        {"demented/rift",                "cults"},
-        {"demented/scourge-drake",       "cults"},
-        {"demented/slow-death",          "cults"},
-        {"demented/tentacles",           "cults"},
-        {"demented/timethief",           "cults"},
-        {"demented/void",                "cults"},
-        // Embers of Rage (newTalentType definitions in data-orcs)
-        {"psionic/action-at-a-distance", "orcs"},
-        {"psionic/gestalt",              "orcs"},
-        {"psionic/psionic-fog",          "orcs"},
-        {"spell/undead-drake",           "orcs"},
-        {"steamtech/artillery",          "orcs"},
-        {"steamtech/automated-butchery", "orcs"},
-        {"steamtech/automation",         "orcs"},
-        {"steamtech/avoidance",          "orcs"},
-        {"steamtech/battle-machinery",   "orcs"},
-        {"steamtech/battlefield-management", "orcs"},
-        {"steamtech/blacksmith",         "orcs"},
-        {"steamtech/bullets-mastery",    "orcs"},
-        {"steamtech/butchery",           "orcs"},
-        {"steamtech/chemical-warfare",   "orcs"},
-        {"steamtech/chemistry",          "orcs"},
-        {"steamtech/demolition",         "orcs"},
-        {"steamtech/dread",              "orcs"},
-        {"steamtech/elusiveness",        "orcs"},
-        {"steamtech/engineering",        "orcs"},
-        {"steamtech/furnace",            "orcs"},
-        {"steamtech/gadgets",            "orcs"},
-        {"steamtech/gunner-training",    "orcs"},
-        {"steamtech/gunslinging",        "orcs"},
-        {"steamtech/heavy-weapons",      "orcs"},
-        {"steamtech/magnetism",          "orcs"},
-        {"steamtech/mecharachnid",       "orcs"},
-        {"steamtech/mechstar",           "orcs"},
-        {"steamtech/physics",            "orcs"},
-        {"steamtech/psytech-gunnery",    "orcs"},
-        {"steamtech/sawmaiming",         "orcs"},
-        {"steamtech/thoughts-of-iron",   "orcs"},
-        {"steamtech/turrets",            "orcs"},
-    };
-    auto it = dlc_trees.find(id);
-    if (it != dlc_trees.end()) return it->second;
-    return "@vanilla@";
+inline const char *tree_source(const std::string &id) {
+  static const std::unordered_map<std::string, const char *> dlc_trees = {
+      // Ashes of Urh'Rok (newTalentType definitions in data-ashes-urhrok)
+      {"corruption/black-magic", "ashes-urhrok"},
+      {"corruption/brutality", "ashes-urhrok"},
+      {"corruption/demonic-pact", "ashes-urhrok"},
+      {"corruption/demonic-strength", "ashes-urhrok"},
+      {"corruption/doom-covenant", "ashes-urhrok"},
+      {"corruption/doom-shield", "ashes-urhrok"},
+      {"corruption/fearfire", "ashes-urhrok"},
+      {"corruption/heart-of-fire", "ashes-urhrok"},
+      {"corruption/infernal-combat", "ashes-urhrok"},
+      {"corruption/oppression", "ashes-urhrok"},
+      {"corruption/spellblaze", "ashes-urhrok"},
+      {"corruption/torture", "ashes-urhrok"},
+      {"corruption/wrath", "ashes-urhrok"},
+      // Forbidden Cults (newTalentType definitions in data-cults)
+      {"demented/beyond-sanity", "cults"},
+      {"demented/calamity", "cults"},
+      {"demented/chronophage", "cults"},
+      {"demented/controlled-horrors", "cults"},
+      {"demented/disfigured-face", "cults"},
+      {"demented/doom", "cults"},
+      {"demented/entropy", "cults"},
+      {"demented/friend-of-the-worm", "cults"},
+      {"demented/horrific-body", "cults"},
+      {"demented/madness", "cults"},
+      {"demented/nether", "cults"},
+      {"demented/oblivion", "cults"},
+      {"demented/path-of-horror", "cults"},
+      {"demented/rift", "cults"},
+      {"demented/scourge-drake", "cults"},
+      {"demented/slow-death", "cults"},
+      {"demented/tentacles", "cults"},
+      {"demented/timethief", "cults"},
+      {"demented/void", "cults"},
+      // Embers of Rage (newTalentType definitions in data-orcs)
+      {"psionic/action-at-a-distance", "orcs"},
+      {"psionic/gestalt", "orcs"},
+      {"psionic/psionic-fog", "orcs"},
+      {"spell/undead-drake", "orcs"},
+      {"steamtech/artillery", "orcs"},
+      {"steamtech/automated-butchery", "orcs"},
+      {"steamtech/automation", "orcs"},
+      {"steamtech/avoidance", "orcs"},
+      {"steamtech/battle-machinery", "orcs"},
+      {"steamtech/battlefield-management", "orcs"},
+      {"steamtech/blacksmith", "orcs"},
+      {"steamtech/bullets-mastery", "orcs"},
+      {"steamtech/butchery", "orcs"},
+      {"steamtech/chemical-warfare", "orcs"},
+      {"steamtech/chemistry", "orcs"},
+      {"steamtech/demolition", "orcs"},
+      {"steamtech/dread", "orcs"},
+      {"steamtech/elusiveness", "orcs"},
+      {"steamtech/engineering", "orcs"},
+      {"steamtech/furnace", "orcs"},
+      {"steamtech/gadgets", "orcs"},
+      {"steamtech/gunner-training", "orcs"},
+      {"steamtech/gunslinging", "orcs"},
+      {"steamtech/heavy-weapons", "orcs"},
+      {"steamtech/magnetism", "orcs"},
+      {"steamtech/mecharachnid", "orcs"},
+      {"steamtech/mechstar", "orcs"},
+      {"steamtech/physics", "orcs"},
+      {"steamtech/psytech-gunnery", "orcs"},
+      {"steamtech/sawmaiming", "orcs"},
+      {"steamtech/thoughts-of-iron", "orcs"},
+      {"steamtech/turrets", "orcs"},
+  };
+  auto it = dlc_trees.find(id);
+  if (it != dlc_trees.end())
+    return it->second;
+  return "@vanilla@";
 }
 
 // Unlock configuration loaded from JSON.
 struct UnlockConfig {
-    std::string version;  // game version string (e.g. "1.7.6")
-    bool is_dwarf = false;
-    std::unordered_map<std::string, bool> subclasses; // subclass name -> unlocked
-    std::unordered_map<std::string, bool> trees;      // unlock key -> unlocked
-    // addon name -> version string (for non-vanilla addons that contribute trees)
-    std::unordered_map<std::string, std::string> addons;
+  std::string version; // game version string (e.g. "1.7.6")
+  bool is_dwarf = false;
+  std::unordered_map<std::string, bool> subclasses; // subclass name -> unlocked
+  std::unordered_map<std::string, bool> trees;      // unlock key -> unlocked
+  // addon name -> version string (for non-vanilla addons that contribute trees)
+  std::unordered_map<std::string, std::string> addons;
 };
 
 struct TalentTreeLists {
-    std::vector<std::string> class_trees;
-    std::vector<std::string> generic_trees;
-    std::unordered_set<std::string> addon_sources;
+  std::vector<std::string> class_trees;
+  std::vector<std::string> generic_trees;
+  std::unordered_set<std::string> addon_sources;
 };
 
 // Per-subclass static data.
 struct SubclassInfo {
-    const char* name;
-    bool not_on_random_boss;
-    // nullptr-terminated list of talent tree IDs from talents_types
-    const char* const* trees;
-    // nullptr-terminated list of {tree_id, unlock_key} pairs from
-    // unlockable_talents_types (flattened: tree, key, tree, key, ..., nullptr)
-    const char* const* unlockable_trees;
+  const char *name;
+  bool not_on_random_boss;
+  // nullptr-terminated list of talent tree IDs from talents_types
+  const char *const *trees;
+  // nullptr-terminated list of {tree_id, unlock_key} pairs from
+  // unlockable_talents_types (flattened: tree, key, tree, key, ..., nullptr)
+  const char *const *unlockable_trees;
 };
 
 // clang-format off
@@ -485,100 +486,100 @@ static const char* const no_unlockables[] = { nullptr };
 // Stone Warden has not_on_random_boss=true but is included when race is Dwarf.
 static const SubclassInfo all_subclasses[] = {
     // Always-available subclasses (no locked function)
-    {"Berserker",       false, trees_berserker,       no_unlockables},
-    {"Bulwark",         false, trees_bulwark,          no_unlockables},
-    {"Archer",          false, trees_archer,           unlock_archer},
-    {"Arcane Blade",    false, trees_arcane_blade,     no_unlockables},
-    {"Brawler",         false, trees_brawler,          no_unlockables},
-    {"Rogue",           false, trees_rogue,            unlock_rogue},
-    {"Shadowblade",     false, trees_shadowblade,      no_unlockables},
-    {"Marauder",        false, trees_marauder,         unlock_marauder},
-    {"Skirmisher",      false, trees_skirmisher,       unlock_skirmisher},
-    {"Alchemist",       false, trees_alchemist,        no_unlockables},
+    {"Berserker", false, trees_berserker, no_unlockables},
+    {"Bulwark", false, trees_bulwark, no_unlockables},
+    {"Archer", false, trees_archer, unlock_archer},
+    {"Arcane Blade", false, trees_arcane_blade, no_unlockables},
+    {"Brawler", false, trees_brawler, no_unlockables},
+    {"Rogue", false, trees_rogue, unlock_rogue},
+    {"Shadowblade", false, trees_shadowblade, no_unlockables},
+    {"Marauder", false, trees_marauder, unlock_marauder},
+    {"Skirmisher", false, trees_skirmisher, unlock_skirmisher},
+    {"Alchemist", false, trees_alchemist, no_unlockables},
     // Locked subclasses (require profile unlock)
-    {"Archmage",        false, trees_archmage,         no_unlockables},
-    {"Necromancer",     false, trees_necromancer,      no_unlockables},
-    {"Cursed",          false, trees_cursed,           no_unlockables},
-    {"Doomed",          false, trees_doomed,           no_unlockables},
-    {"Sun Paladin",     false, trees_sun_paladin,      no_unlockables},
-    {"Anorithil",       false, trees_anorithil,        no_unlockables},
-    {"Reaver",          false, trees_reaver,           no_unlockables},
-    {"Corruptor",       false, trees_corruptor,        no_unlockables},
-    {"Paradox Mage",    false, trees_paradox_mage,     no_unlockables},
-    {"Temporal Warden", false, trees_temporal_warden,  no_unlockables},
-    {"Mindslayer",      false, trees_mindslayer,       no_unlockables},
-    {"Solipsist",       false, trees_solipsist,        no_unlockables},
-    {"Summoner",        false, trees_summoner,         no_unlockables},
-    {"Wyrmic",          false, trees_wyrmic,           unlock_wyrmic},
-    {"Oozemancer",      false, trees_oozemancer,       no_unlockables},
-    {"Stone Warden",    true,  trees_stone_warden,     no_unlockables},
+    {"Archmage", false, trees_archmage, no_unlockables},
+    {"Necromancer", false, trees_necromancer, no_unlockables},
+    {"Cursed", false, trees_cursed, no_unlockables},
+    {"Doomed", false, trees_doomed, no_unlockables},
+    {"Sun Paladin", false, trees_sun_paladin, no_unlockables},
+    {"Anorithil", false, trees_anorithil, no_unlockables},
+    {"Reaver", false, trees_reaver, no_unlockables},
+    {"Corruptor", false, trees_corruptor, no_unlockables},
+    {"Paradox Mage", false, trees_paradox_mage, no_unlockables},
+    {"Temporal Warden", false, trees_temporal_warden, no_unlockables},
+    {"Mindslayer", false, trees_mindslayer, no_unlockables},
+    {"Solipsist", false, trees_solipsist, no_unlockables},
+    {"Summoner", false, trees_summoner, no_unlockables},
+    {"Wyrmic", false, trees_wyrmic, unlock_wyrmic},
+    {"Oozemancer", false, trees_oozemancer, no_unlockables},
+    {"Stone Warden", true, trees_stone_warden, no_unlockables},
     // DLC: Ashes of Urh'Rok
-    {"Doombringer",     false, trees_doombringer,      no_unlockables},
-    {"Demonologist",    false, trees_demonologist,     no_unlockables},
+    {"Doombringer", false, trees_doombringer, no_unlockables},
+    {"Demonologist", false, trees_demonologist, no_unlockables},
     // DLC: Forbidden Cults
-    {"Writhing One",    false, trees_writhing_one,     no_unlockables},
+    {"Writhing One", false, trees_writhing_one, no_unlockables},
     {"Cultist of Entropy", false, trees_cultist_of_entropy, no_unlockables},
     // DLC: Embers of Rage
-    {"Sawbutcher",      false, trees_sawbutcher,       no_unlockables},
-    {"Gunslinger",      false, trees_gunslinger,       no_unlockables},
-    {"Psyshot",         false, trees_psyshot,          no_unlockables},
-    {"Annihilator",     false, trees_annihilator,      no_unlockables},
+    {"Sawbutcher", false, trees_sawbutcher, no_unlockables},
+    {"Gunslinger", false, trees_gunslinger, no_unlockables},
+    {"Psyshot", false, trees_psyshot, no_unlockables},
+    {"Annihilator", false, trees_annihilator, no_unlockables},
 };
 
 static constexpr int NUM_SUBCLASSES =
     sizeof(all_subclasses) / sizeof(all_subclasses[0]);
 
 // Build the class and generic talent tree lists based on unlock config.
-inline TalentTreeLists build_talent_trees(const UnlockConfig& config) {
-    TalentTreeLists result;
+inline TalentTreeLists build_talent_trees(const UnlockConfig &config) {
+  TalentTreeLists result;
 
-    for (int i = 0; i < NUM_SUBCLASSES; i++) {
-        const auto& sc = all_subclasses[i];
+  for (int i = 0; i < NUM_SUBCLASSES; i++) {
+    const auto &sc = all_subclasses[i];
 
-        // Check if this subclass is unlocked
-        auto it = config.subclasses.find(sc.name);
-        if (it == config.subclasses.end() || !it->second) {
-            continue; // locked — no .def, skipped entirely
-        }
-
-        // Check not_on_random_boss filter
-        // Stone Warden is the only one with this flag; included only for Dwarf
-        if (sc.not_on_random_boss) {
-            if (std::string(sc.name) == "Stone Warden" && config.is_dwarf) {
-                // allowed
-            } else {
-                continue;
-            }
-        }
-
-        // Add base talent trees
-        for (int j = 0; sc.trees[j] != nullptr; j++) {
-            std::string id = sc.trees[j];
-            result.addon_sources.insert(tree_source(id));
-            if (is_generic_tree(id)) {
-                result.generic_trees.push_back(id);
-            } else {
-                result.class_trees.push_back(id);
-            }
-        }
-
-        // Add unlockable talent trees (individually gated)
-        for (int j = 0; sc.unlockable_trees[j] != nullptr; j += 2) {
-            const char* tree_id = sc.unlockable_trees[j];
-            const char* unlock_key = sc.unlockable_trees[j + 1];
-
-            auto uit = config.trees.find(unlock_key);
-            if (uit != config.trees.end() && uit->second) {
-                std::string id = tree_id;
-                result.addon_sources.insert(tree_source(id));
-                if (is_generic_tree(id)) {
-                    result.generic_trees.push_back(id);
-                } else {
-                    result.class_trees.push_back(id);
-                }
-            }
-        }
+    // Check if this subclass is unlocked
+    auto it = config.subclasses.find(sc.name);
+    if (it == config.subclasses.end() || !it->second) {
+      continue; // locked - no .def, skipped entirely
     }
 
-    return result;
+    // Check not_on_random_boss filter
+    // Stone Warden is the only one with this flag; included only for Dwarf
+    if (sc.not_on_random_boss) {
+      if (std::string(sc.name) == "Stone Warden" && config.is_dwarf) {
+        // allowed
+      } else {
+        continue;
+      }
+    }
+
+    // Add base talent trees
+    for (int j = 0; sc.trees[j] != nullptr; j++) {
+      std::string id = sc.trees[j];
+      result.addon_sources.insert(tree_source(id));
+      if (is_generic_tree(id)) {
+        result.generic_trees.push_back(id);
+      } else {
+        result.class_trees.push_back(id);
+      }
+    }
+
+    // Add unlockable talent trees (individually gated)
+    for (int j = 0; sc.unlockable_trees[j] != nullptr; j += 2) {
+      const char *tree_id = sc.unlockable_trees[j];
+      const char *unlock_key = sc.unlockable_trees[j + 1];
+
+      auto uit = config.trees.find(unlock_key);
+      if (uit != config.trees.end() && uit->second) {
+        std::string id = tree_id;
+        result.addon_sources.insert(tree_source(id));
+        if (is_generic_tree(id)) {
+          result.generic_trees.push_back(id);
+        } else {
+          result.class_trees.push_back(id);
+        }
+      }
+    }
+  }
+
+  return result;
 }
