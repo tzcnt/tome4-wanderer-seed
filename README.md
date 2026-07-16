@@ -17,7 +17,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-Or use the helper: `./run.sh` (build + generate) / `./run.sh search` (build + search).
+Or use the helper: `./run.sh` (build + search) / `./run.sh generate <seed>` (build + generate).
 
 ## Configuration
 
@@ -33,7 +33,8 @@ Or use the helper: `./run.sh` (build + generate) / `./run.sh search` (build + se
 ## Usage
 
 ```sh
-# Brute-force search all seeds for ones matching rules.json:
+# Brute-force search all seeds for ones matching rules.json.
+# Search is capped to 100 results.
 ./build/wanderer_seed search unlocks.json rules.json
 
 # Show the talent-tree unlock order for one seed:

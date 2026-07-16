@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -317,10 +318,8 @@ static void run_search(int argc, char *argv[]) {
   std::atomic<uint64_t> found{0};
   std::atomic<bool> stop_flag{false};
 
-  // Preallocate one results vector per thread.
-  std::vector<std::vector<uint32_t>> results(nthreads);
-  for (auto &v : results)
-    v.reserve(MAX_RESULTS / nthreads + 1);
+  // Serializes printing so seeds from different threads don't interleave.
+  std::mutex print_mutex;
 
   uint32_t chunk = TOTAL_SEEDS / nthreads;
 
@@ -331,7 +330,7 @@ static void run_search(int argc, char *argv[]) {
     uint32_t start = tid * chunk + 1;
     uint32_t end = (tid == nthreads - 1) ? MAX_SEED : (tid + 1) * chunk;
 
-    threads.emplace_back([&, tid, start, end]() {
+    threads.emplace_back([&, start, end]() {
       // Thread-local working buffers.
       std::vector<uint16_t> class_idx(base_class_idx.size());
       std::vector<uint16_t> generic_idx(base_generic_idx.size());
@@ -396,7 +395,15 @@ static void run_search(int argc, char *argv[]) {
           stop_flag.store(true, std::memory_order_relaxed);
           return;
         }
-        results[tid].push_back(seed);
+
+        // Print the seed as soon as it's found. The mutex keeps concurrent
+        // writes from interleaving; the flush makes it stream when stdout is
+        // redirected to a pipe or file.
+        {
+          std::lock_guard<std::mutex> lock(print_mutex);
+          std::printf("%u-%s\n", seed, fingerprint.c_str());
+          std::fflush(stdout);
+        }
       }
     });
   }
@@ -404,18 +411,10 @@ static void run_search(int argc, char *argv[]) {
   for (auto &t : threads)
     t.join();
 
-  // Output results in seed order across all thread vectors.
-  // Collect and sort since threads cover non-overlapping ascending ranges
-  // but we want globally sorted output.
-  std::vector<uint32_t> all_results;
-  for (const auto &v : results)
-    all_results.insert(all_results.end(), v.begin(), v.end());
-  std::sort(all_results.begin(), all_results.end());
-
-  for (uint32_t seed : all_results)
-    std::printf("%u-%s\n", seed, fingerprint.c_str());
-
-  std::fprintf(stderr, "Done. Found %zu matching seeds.\n", all_results.size());
+  // Seeds were printed as they were found (see the search loop). Report the
+  // total, capped at MAX_RESULTS since that's how many were actually printed.
+  uint64_t total = std::min<uint64_t>(found.load(), MAX_RESULTS);
+  std::fprintf(stderr, "Done. Found %" PRIu64 " matching seeds.\n", total);
 }
 
 int main(int argc, char *argv[]) {
