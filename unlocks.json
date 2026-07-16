@@ -1,0 +1,51 @@
+{
+    "_comment": "Unlock status for Wanderer seed talent tree generation. Set to false to simulate a profile that hasn't unlocked that subclass/tree yet.",
+    "version": "tome-1.7.6",
+    "is_dwarf": true,
+    "subclasses": {
+        "Berserker": true,
+        "Bulwark": true,
+        "Archer": true,
+        "Arcane Blade": true,
+        "Brawler": true,
+        "Rogue": true,
+        "Shadowblade": true,
+        "Marauder": true,
+        "Skirmisher": true,
+        "Alchemist": true,
+        "Archmage": true,
+        "Necromancer": true,
+        "Cursed": true,
+        "Doomed": true,
+        "Sun Paladin": true,
+        "Anorithil": true,
+        "Reaver": true,
+        "Corruptor": true,
+        "Paradox Mage": false,
+        "Temporal Warden": true,
+        "Mindslayer": true,
+        "Solipsist": true,
+        "Summoner": true,
+        "Wyrmic": true,
+        "Oozemancer": true,
+        "Stone Warden": true,
+        "Doombringer": true,
+        "Demonologist": true,
+        "Writhing One": true,
+        "Cultist of Entropy": true,
+        "Sawbutcher": false,
+        "Gunslinger": false,
+        "Psyshot": false,
+        "Annihilator": false
+    },
+    "trees": {
+        "rogue_poisons": true,
+        "wyrmic_undead": false,
+        "wyrmic_scourge": true
+    },
+    "addons": {
+        "ashes-urhrok": "1.1.4",
+        "cults": "1.0.12",
+        "orcs": "1.1.10"
+    }
+}
