@@ -1,6 +1,7 @@
 # Build output
 /build/
 /build*/
+/out/
 
 # CMake cruft (in case of in-source configure)
 CMakeCache.txt
@@ -12,6 +13,8 @@ Makefile
 .DS_Store
 *.swp
 *~
+.vs
+.vscode
 
 # clangd
 .cache
