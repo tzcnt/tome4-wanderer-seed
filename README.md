@@ -72,6 +72,8 @@ Given your unlock profile (which subclasses / trees your account has unlocked), 
 the full unlock order for a single seed or search the entire `1..2147483647` seed space
 (multithreaded) for seeds matching your rules.
 
+Note that the game will only naturally generate seeds in the range `1..99999999`, but will accept seeds outside that range, so we search the full space.
+
 ## Project layout
 
 ```
