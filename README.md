@@ -43,6 +43,20 @@ Or use the helper: `./run.sh` (build + search) / `./run.sh generate <seed>` (bui
 ./build/wanderer_seed generate 61742831 unlocks.json
 ```
 
+## Using your GPU to speedup search
+
+```sh
+# Configure and build with OpenCL support
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DWANDERER_ENABLE_OPENCL=ON
+cmake --build build
+
+# Run the search on GPU only
+./build/wanderer_seed search unlocks.json rules.json --gpu
+
+# Run the search on both CPU and GPU simultaneously
+./build/wanderer_seed search unlocks.json rules.json --gpu --cpu
+```
+
 ## How it works
 
 The Wanderer class in ToME derives its randomized talent trees from the game seed. This tool

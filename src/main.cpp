@@ -15,7 +15,12 @@
 #include <nlohmann/json.hpp>
 
 #include "fingerprint.hpp"
+#include "search_common.hpp"
 #include "talent_trees.hpp"
+
+#ifdef WANDERER_ENABLE_OPENCL
+#include "search_gpu.hpp"
+#endif
 
 extern "C" {
 void init_gen_rand(uint32_t seed);
@@ -220,10 +225,39 @@ static void run_generate(int argc, char *argv[]) {
 
 static void run_search(int argc, char *argv[]) {
   if (argc < 4) {
-    std::fprintf(stderr, "Usage: %s search <unlocks.json> <rules.json>\n",
-                 argv[0]);
+    std::fprintf(
+        stderr,
+        "Usage: %s search <unlocks.json> <rules.json> [--cpu] [--gpu]\n"
+        "  --cpu        search on the CPU (default if no flag given)\n"
+        "  --gpu        search on the GPU (requires an OpenCL build)\n"
+        "  --cpu --gpu  use both at once; work self-balances between them\n",
+        argv[0]);
     std::exit(1);
   }
+
+  bool use_cpu = false, use_gpu = false;
+  for (int i = 4; i < argc; i++) {
+    if (std::strcmp(argv[i], "--cpu") == 0)
+      use_cpu = true;
+    else if (std::strcmp(argv[i], "--gpu") == 0)
+      use_gpu = true;
+    else {
+      std::fprintf(stderr, "Unknown option: %s\n", argv[i]);
+      std::exit(1);
+    }
+  }
+  if (!use_cpu && !use_gpu)
+    use_cpu = true; // default: CPU alone
+
+#ifndef WANDERER_ENABLE_OPENCL
+  if (use_gpu) {
+    std::fprintf(
+        stderr, "Error: --gpu requested but this build has no OpenCL support.\n"
+                "Rebuild with: cmake -S . -B build -DWANDERER_ENABLE_OPENCL=ON "
+                "&& cmake --build build\n");
+    std::exit(1);
+  }
+#endif
 
   auto config = load_config(argv[2]);
   auto rules = load_rules(argv[3]);
@@ -308,112 +342,152 @@ static void run_search(int argc, char *argv[]) {
       compute_fingerprint(config.version, base.addon_sources, config.addons);
 
   constexpr uint32_t MAX_SEED = 2147483647;
-  constexpr uint32_t TOTAL_SEEDS = MAX_SEED; // seeds 1..MAX_SEED
-  constexpr uint64_t MAX_RESULTS = 100;
 
-  unsigned nthreads = std::max(1u, std::thread::hardware_concurrency() / 2);
-  std::fprintf(stderr, "Searching seeds 1..%u with %u threads ...\n", MAX_SEED,
-               nthreads);
+  // Seed range and result cap default to the full space / 100 hits, but can be
+  // narrowed via env vars (handy for partial scans and for cross-checking the
+  // GPU path against the CPU path over a bounded range).
+  uint32_t seed_start = 1, seed_end = MAX_SEED;
+  uint64_t max_results = 100;
+  if (const char *s = std::getenv("WANDERER_SEED_START"))
+    seed_start = static_cast<uint32_t>(std::strtoul(s, nullptr, 10));
+  if (const char *s = std::getenv("WANDERER_SEED_END"))
+    seed_end = static_cast<uint32_t>(std::strtoul(s, nullptr, 10));
+  if (const char *s = std::getenv("WANDERER_MAX_RESULTS"))
+    max_results = std::strtoull(s, nullptr, 10);
+  if (seed_start < 1)
+    seed_start = 1;
+  if (seed_end > MAX_SEED)
+    seed_end = MAX_SEED;
+  if (seed_end < seed_start) {
+    std::fprintf(stderr, "Empty seed range (%u..%u).\n", seed_start, seed_end);
+    return;
+  }
 
-  std::atomic<uint64_t> found{0};
-  std::atomic<bool> stop_flag{false};
+  // Shared work queue: CPU threads and the GPU driver both pull seed chunks
+  // from one atomic cursor, so the split self-balances by relative speed. Chunk
+  // size trades tail load-balance (smaller) against per-chunk overhead
+  // (larger).
+  uint32_t chunk_size = 1u << 20; // ~1M seeds
+  if (const char *s = std::getenv("WANDERER_CHUNK")) {
+    unsigned long v = std::strtoul(s, nullptr, 10);
+    if (v > 0)
+      chunk_size = static_cast<uint32_t>(v);
+  }
+  SearchCoord coord(seed_start, seed_end, chunk_size, max_results,
+                    &fingerprint);
 
-  // Serializes printing so seeds from different threads don't interleave.
-  std::mutex print_mutex;
-
-  uint32_t chunk = TOTAL_SEEDS / nthreads;
+  std::fprintf(stderr, "Searching seeds %u..%u on %s%s%s ...\n", seed_start,
+               seed_end, use_cpu ? "CPU" : "", (use_cpu && use_gpu) ? "+" : "",
+               use_gpu ? "GPU" : "");
 
   std::vector<std::thread> threads;
-  threads.reserve(nthreads);
 
-  for (unsigned tid = 0; tid < nthreads; tid++) {
-    uint32_t start = tid * chunk + 1;
-    uint32_t end = (tid == nthreads - 1) ? MAX_SEED : (tid + 1) * chunk;
+#ifdef WANDERER_ENABLE_OPENCL
+  // GPU config, flattened into the plain arrays the kernel driver consumes.
+  // Declared at function scope so it outlives the GPU thread (joined below).
+  std::vector<int> gpu_sched_level;
+  std::vector<uint8_t> gpu_sched_is_class;
+  GpuRules gpu_rules;
+  if (use_gpu) {
+    for (const auto &st : schedule_template) {
+      gpu_sched_level.push_back(st.level);
+      gpu_sched_is_class.push_back(st.is_class ? 1 : 0);
+    }
+    for (const auto &ir : indexed_rules) {
+      gpu_rules.min_level.push_back(ir.min_level);
+      gpu_rules.max_level.push_back(ir.max_level);
+      gpu_rules.talent_offset.push_back(
+          static_cast<int>(gpu_rules.talents.size()));
+      gpu_rules.talent_count.push_back(static_cast<int>(ir.talents.size()));
+      for (uint16_t t : ir.talents)
+        gpu_rules.talents.push_back(t);
+    }
+    threads.emplace_back([&]() {
+      run_search_gpu(base_class_idx, base_generic_idx, combat_training_idx,
+                     num_trees, gpu_sched_level, gpu_sched_is_class, gpu_rules,
+                     coord);
+    });
+  }
+#endif
 
-    threads.emplace_back([&, start, end]() {
-      // Thread-local working buffers.
-      std::vector<uint16_t> class_idx(base_class_idx.size());
-      std::vector<uint16_t> generic_idx(base_generic_idx.size());
-      std::vector<bool> seen(num_trees, false);
-      std::vector<int> rule_matched(indexed_rules.size());
+  if (use_cpu) {
+    unsigned nthreads = std::max(1u, std::thread::hardware_concurrency() / 2);
+    for (unsigned t = 0; t < nthreads; t++) {
+      threads.emplace_back([&]() {
+        // Thread-local working buffers.
+        std::vector<uint16_t> class_idx(base_class_idx.size());
+        std::vector<uint16_t> generic_idx(base_generic_idx.size());
+        std::vector<bool> seen(num_trees, false);
+        std::vector<int> rule_matched(indexed_rules.size());
 
-      for (uint32_t seed = start; seed <= end; seed++) {
-        if (stop_flag.load(std::memory_order_relaxed))
-          return;
+        uint32_t start, count;
+        while (coord.claim(start, count)) {
+          uint32_t end = start + count - 1; // count >= 1
+          for (uint32_t seed = start; seed <= end; seed++) {
+            if (coord.stop.load(std::memory_order_relaxed))
+              return;
 
-        std::memcpy(class_idx.data(), base_class_idx.data(),
-                    base_class_idx.size() * sizeof(uint16_t));
-        std::memcpy(generic_idx.data(), base_generic_idx.data(),
-                    base_generic_idx.size() * sizeof(uint16_t));
+            std::memcpy(class_idx.data(), base_class_idx.data(),
+                        base_class_idx.size() * sizeof(uint16_t));
+            std::memcpy(generic_idx.data(), base_generic_idx.data(),
+                        base_generic_idx.size() * sizeof(uint16_t));
 
-        init_gen_rand(seed);
-        fisher_yates_shuffle(class_idx);
-        fisher_yates_shuffle(generic_idx);
+            init_gen_rand(seed);
+            fisher_yates_shuffle(class_idx);
+            fisher_yates_shuffle(generic_idx);
 
-        seen.assign(num_trees, false);
-        seen[combat_training_idx] = true;
-        std::fill(rule_matched.begin(), rule_matched.end(), 0);
+            seen.assign(num_trees, false);
+            seen[combat_training_idx] = true;
+            std::fill(rule_matched.begin(), rule_matched.end(), 0);
 
-        size_t cpos = 0, gpos = 0;
-        bool failed = false;
+            size_t cpos = 0, gpos = 0;
+            bool failed = false;
 
-        for (int si = 0; si < schedule_len; si++) {
-          int level = schedule_template[si].level;
-          auto &list = schedule_template[si].is_class ? class_idx : generic_idx;
-          size_t &pos = schedule_template[si].is_class ? cpos : gpos;
-          uint16_t tree = pop_tree_idx(list, pos, seen);
-          if (tree == UINT16_MAX)
-            continue;
+            for (int si = 0; si < schedule_len; si++) {
+              int level = schedule_template[si].level;
+              auto &list =
+                  schedule_template[si].is_class ? class_idx : generic_idx;
+              size_t &pos = schedule_template[si].is_class ? cpos : gpos;
+              uint16_t tree = pop_tree_idx(list, pos, seen);
+              if (tree == UINT16_MAX)
+                continue;
 
-          for (size_t ri = 0; ri < indexed_rules.size(); ri++) {
-            const auto &rule = indexed_rules[ri];
-            if (level < rule.min_level || level > rule.max_level)
-              continue;
-            for (uint16_t req : rule.talents) {
-              if (tree == req) {
-                rule_matched[ri]++;
+              for (size_t ri = 0; ri < indexed_rules.size(); ri++) {
+                const auto &rule = indexed_rules[ri];
+                if (level < rule.min_level || level > rule.max_level)
+                  continue;
+                for (uint16_t req : rule.talents) {
+                  if (tree == req) {
+                    rule_matched[ri]++;
+                    break;
+                  }
+                }
+              }
+            }
+
+            for (size_t ri = 0; ri < indexed_rules.size(); ri++) {
+              if (rule_matched[ri] <
+                  static_cast<int>(indexed_rules[ri].talents.size())) {
+                failed = true;
                 break;
               }
             }
+            if (failed)
+              continue;
+
+            coord.report(seed);
           }
         }
-
-        if (!failed) {
-          for (size_t ri = 0; ri < indexed_rules.size(); ri++) {
-            if (rule_matched[ri] <
-                static_cast<int>(indexed_rules[ri].talents.size())) {
-              failed = true;
-              break;
-            }
-          }
-        }
-        if (failed)
-          continue;
-
-        uint64_t count = found.fetch_add(1, std::memory_order_relaxed);
-        if (count >= MAX_RESULTS) {
-          stop_flag.store(true, std::memory_order_relaxed);
-          return;
-        }
-
-        // Print the seed as soon as it's found. The mutex keeps concurrent
-        // writes from interleaving; the flush makes it stream when stdout is
-        // redirected to a pipe or file.
-        {
-          std::lock_guard<std::mutex> lock(print_mutex);
-          std::printf("%u-%s\n", seed, fingerprint.c_str());
-          std::fflush(stdout);
-        }
-      }
-    });
+      });
+    }
   }
 
   for (auto &t : threads)
     t.join();
 
-  // Seeds were printed as they were found (see the search loop). Report the
-  // total, capped at MAX_RESULTS since that's how many were actually printed.
-  uint64_t total = std::min<uint64_t>(found.load(), MAX_RESULTS);
+  // Seeds were printed as they were found. Report the total, capped at
+  // max_results since that's how many were actually printed.
+  uint64_t total = std::min<uint64_t>(coord.found.load(), max_results);
   std::fprintf(stderr, "Done. Found %" PRIu64 " matching seeds.\n", total);
 }
 

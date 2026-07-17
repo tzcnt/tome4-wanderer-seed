@@ -1,5 +1,6 @@
 # Build output
 /build/
+/build*/
 
 # CMake cruft (in case of in-source configure)
 CMakeCache.txt

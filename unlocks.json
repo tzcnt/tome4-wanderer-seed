@@ -21,7 +21,7 @@
         "Anorithil": true,
         "Reaver": true,
         "Corruptor": true,
-        "Paradox Mage": true,
+        "Paradox Mage": false,
         "Temporal Warden": true,
         "Mindslayer": true,
         "Solipsist": true,
@@ -33,14 +33,14 @@
         "Demonologist": true,
         "Writhing One": true,
         "Cultist of Entropy": true,
-        "Sawbutcher": true,
-        "Gunslinger": true,
-        "Psyshot": true,
-        "Annihilator": true
+        "Sawbutcher": false,
+        "Gunslinger": false,
+        "Psyshot": false,
+        "Annihilator": false
     },
     "trees": {
         "rogue_poisons": true,
-        "wyrmic_undead": true,
+        "wyrmic_undead": false,
         "wyrmic_scourge": true
     },
     "addons": {
