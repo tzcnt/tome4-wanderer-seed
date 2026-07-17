@@ -12,3 +12,6 @@ Makefile
 .DS_Store
 *.swp
 *~
+
+# clangd
+.cache

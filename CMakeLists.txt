@@ -5,6 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# 1. Enable CMP0091 to allow MSVC_RUNTIME_LIBRARY abstraction
+cmake_policy(SET CMP0091 NEW)
+
+# 2. Set the global runtime library to static (MultiThreaded / MultiThreadedDebug)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 include(FetchContent)
 FetchContent_Declare(
     json
