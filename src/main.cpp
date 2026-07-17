@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -141,13 +140,17 @@ static SearchRules load_rules(const char *path) {
 }
 
 static void run_generate(int argc, char *argv[]) {
-  if (argc < 4) {
-    std::fprintf(stderr, "Usage: %s generate <seed> <unlocks.json>\n", argv[0]);
+  if (argc < 3) {
+    std::fprintf(stderr,
+                 "Usage: %s generate <seed> [unlocks.json]\n"
+                 "  unlocks.json  unlock config (default: unlocks.json)\n",
+                 argv[0]);
     std::exit(1);
   }
 
   uint32_t seed = static_cast<uint32_t>(std::strtoul(argv[2], nullptr, 10));
-  auto config = load_config(argv[3]);
+  const char *unlocks_path = argc > 3 ? argv[3] : "unlocks.json";
+  auto config = load_config(unlocks_path);
 
   // Step 1: Build the talent tree lists from unlock config
   auto lists = build_talent_trees(config);
@@ -223,29 +226,47 @@ static void run_generate(int argc, char *argv[]) {
                     [](const Unlock &u) { return u.type == "generic"; }));
 }
 
-static void run_search(int argc, char *argv[]) {
-  if (argc < 4) {
-    std::fprintf(
-        stderr,
-        "Usage: %s search <unlocks.json> <rules.json> [--cpu] [--gpu]\n"
-        "  --cpu        search on the CPU (default if no flag given)\n"
-        "  --gpu        search on the GPU (requires an OpenCL build)\n"
-        "  --cpu --gpu  use both at once; work self-balances between them\n",
-        argv[0]);
-    std::exit(1);
-  }
+static void print_search_usage(const char *prog) {
+  std::fprintf(
+      stderr,
+      "Usage: %s search [unlocks.json] [rules.json] [--cpu] [--gpu]\n"
+      "  unlocks.json  unlock config      (default: unlocks.json)\n"
+      "  rules.json    search criteria    (default: rules.json)\n"
+      "  --cpu         search on the CPU (default if no flag given)\n"
+      "  --gpu         search on the GPU (requires an OpenCL build)\n"
+      "  --cpu --gpu   use both at once; work self-balances between them\n"
+      "Flags may appear in any position; positional paths are matched in the\n"
+      "order shown above, and any omitted trailing path uses its default.\n",
+      prog);
+}
 
+static void run_search(int argc, char *argv[]) {
+  // Flags (--cpu/--gpu) may appear in any position; the remaining positional
+  // args are the config paths, matched in order, each defaulting if omitted.
   bool use_cpu = false, use_gpu = false;
-  for (int i = 4; i < argc; i++) {
+  std::vector<const char *> positional;
+  for (int i = 2; i < argc; i++) {
     if (std::strcmp(argv[i], "--cpu") == 0)
       use_cpu = true;
     else if (std::strcmp(argv[i], "--gpu") == 0)
       use_gpu = true;
-    else {
+    else if (std::strncmp(argv[i], "--", 2) == 0) {
       std::fprintf(stderr, "Unknown option: %s\n", argv[i]);
+      print_search_usage(argv[0]);
       std::exit(1);
+    } else {
+      positional.push_back(argv[i]);
     }
   }
+  if (positional.size() > 2) {
+    std::fprintf(stderr, "Too many arguments.\n");
+    print_search_usage(argv[0]);
+    std::exit(1);
+  }
+  const char *unlocks_path =
+      positional.size() > 0 ? positional[0] : "unlocks.json";
+  const char *rules_path = positional.size() > 1 ? positional[1] : "rules.json";
+
   if (!use_cpu && !use_gpu)
     use_cpu = true; // default: CPU alone
 
@@ -259,8 +280,8 @@ static void run_search(int argc, char *argv[]) {
   }
 #endif
 
-  auto config = load_config(argv[2]);
-  auto rules = load_rules(argv[3]);
+  auto config = load_config(unlocks_path);
+  auto rules = load_rules(rules_path);
 
   // Build and sort the base talent tree lists once.
   auto base = build_talent_trees(config);
@@ -493,10 +514,11 @@ static void run_search(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    std::fprintf(stderr,
-                 "Usage: %s generate <seed> <unlocks.json>\n"
-                 "       %s search <unlocks.json> <rules.json>\n",
-                 argv[0], argv[0]);
+    std::fprintf(
+        stderr,
+        "Usage: %s generate <seed> [unlocks.json]\n"
+        "       %s search [unlocks.json] [rules.json] [--cpu] [--gpu]\n",
+        argv[0], argv[0]);
     return 1;
   }
 
@@ -505,12 +527,11 @@ int main(int argc, char *argv[]) {
   } else if (std::strcmp(argv[1], "generate") == 0) {
     run_generate(argc, argv);
   } else {
-    // Legacy: treat first arg as seed, second as unlocks.json
-    // Shift args to match generate's expected layout.
-    std::fprintf(stderr,
-                 "Usage: %s generate <seed> <unlocks.json>\n"
-                 "       %s search <unlocks.json> <rules.json>\n",
-                 argv[0], argv[0]);
+    std::fprintf(
+        stderr,
+        "Usage: %s generate <seed> [unlocks.json]\n"
+        "       %s search [unlocks.json] [rules.json] [--cpu] [--gpu]\n",
+        argv[0], argv[0]);
     return 1;
   }
 
