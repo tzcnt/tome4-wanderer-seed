@@ -29,6 +29,7 @@ Or use the helper: `./run.sh` (build + search) / `./run.sh generate <seed>` (bui
 - **`rules.json`** - search criteria: a list of `level_ranges`, each requiring
   that one of the listed `talents` be unlocked within the `[min, max]` level window. A seed matches
   only if every range is satisfied.
+- the talent tree names are all listed in [talent_trees.hpp](https://github.com/tzcnt/tome4-wanderer-seed/blob/main/src/talent_trees.hpp)
 
 ## Usage
 
