@@ -2,7 +2,11 @@
     // Unlock status for Wanderer seed talent tree generation. Set an entry to
     // false for a profile that hasn't unlocked that subclass/tree yet.
     "version": "tome-1.7.6",
-    "race": "generic", // "dwarf" adds Stone Warden; "undead" removes wild-gift trees; else "generic"
+    // race options:
+    // - "dwarf" for Dwarf/Drem, unlocks Stone Warden trees
+    // - "undead" for Ghoul/Skeleton/Whitehoof, removes wilder / wild-gift trees
+    // - "generic" or anything else, no restrictions
+    "race": "generic",
     "subclasses": {
         "Berserker": true,
         "Bulwark": true,
