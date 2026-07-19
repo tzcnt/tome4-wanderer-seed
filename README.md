@@ -22,8 +22,9 @@ Or use the helper: `./run.sh` (build + search) / `./run.sh generate <seed>` (bui
 ## Configuration
 
 - **`unlocks.json`** - your account's unlock profile: which subclasses and trees are unlocked,
-  whether the character is a Dwarf, the ToME version, and installed addon versions. Set an entry to
-  `false` to simulate a profile that hasn't unlocked it yet. Addons/DLC affect both the seed
+  the character's `race` (`"dwarf"` adds Stone Warden; `"undead"` removes wild-gift trees; `"generic"` for any other race), the ToME version, and installed addon
+  versions. Set an entry to
+  `false` for a profile that hasn't unlocked it yet. Addons/DLC/Race affect both the seed
   fingerprint and the pool of possible trees, so this must match your game for predictions to be
   correct.
 - **`rules.json`** - search criteria: a list of `level_ranges`, each requiring

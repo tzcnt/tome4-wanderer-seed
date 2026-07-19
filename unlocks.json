@@ -1,7 +1,8 @@
 {
-    "_comment": "Unlock status for Wanderer seed talent tree generation. Set to false to simulate a profile that hasn't unlocked that subclass/tree yet.",
+    // Unlock status for Wanderer seed talent tree generation. Set an entry to
+    // false for a profile that hasn't unlocked that subclass/tree yet.
     "version": "tome-1.7.6",
-    "is_dwarf": true,
+    "race": "generic", // "dwarf" adds Stone Warden; "undead" removes wild-gift trees; else "generic"
     "subclasses": {
         "Berserker": true,
         "Bulwark": true,
@@ -21,7 +22,7 @@
         "Anorithil": true,
         "Reaver": true,
         "Corruptor": true,
-        "Paradox Mage": false,
+        "Paradox Mage": true,
         "Temporal Warden": true,
         "Mindslayer": true,
         "Solipsist": true,
@@ -33,14 +34,14 @@
         "Demonologist": true,
         "Writhing One": true,
         "Cultist of Entropy": true,
-        "Sawbutcher": false,
-        "Gunslinger": false,
-        "Psyshot": false,
-        "Annihilator": false
+        "Sawbutcher": true,
+        "Gunslinger": true,
+        "Psyshot": true,
+        "Annihilator": true
     },
     "trees": {
         "rogue_poisons": true,
-        "wyrmic_undead": false,
+        "wyrmic_undead": true,
         "wyrmic_scourge": true
     },
     "addons": {

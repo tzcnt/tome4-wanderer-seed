@@ -69,6 +69,17 @@ static uint16_t pop_tree_idx(const std::vector<uint16_t> &list, size_t &pos,
   return UINT16_MAX;
 }
 
+// Lowercase an ASCII string in place. Deliberately not std::tolower, which is
+// locale-dependent and takes a char that must be cast to unsigned; race names
+// are plain ASCII so a direct A-Z remap is correct and locale-independent.
+static std::string ascii_tolower(std::string s) {
+  for (char &c : s) {
+    if (c >= 'A' && c <= 'Z')
+      c = static_cast<char>(c - 'A' + 'a');
+  }
+  return s;
+}
+
 static UnlockConfig load_config(const char *path) {
   std::ifstream f(path);
   if (!f.is_open()) {
@@ -76,11 +87,18 @@ static UnlockConfig load_config(const char *path) {
     std::exit(1);
   }
 
-  auto j = nlohmann::json::parse(f);
+  // Allow // and /* */ comments in the config files (nlohmann extension; the
+  // 4th arg enables comment stripping - off by default in strict JSON).
+  auto j = nlohmann::json::parse(f, /*cb=*/nullptr, /*allow_exceptions=*/true,
+                                 /*ignore_comments=*/true);
   UnlockConfig config;
 
   config.version = j.value("version", "tome-1.7.6");
-  config.is_dwarf = j.value("is_dwarf", false);
+  // Normalize to lowercase (ASCII) so race matching is case-insensitive. Only
+  // "dwarf" and "undead" get special handling in build_talent_trees(); any
+  // other value (the conventional "generic", an empty/missing field, or a
+  // typo) falls through to generic behavior.
+  config.race = ascii_tolower(j.value("race", std::string("generic")));
 
   if (j.contains("subclasses")) {
     for (auto &[key, val] : j["subclasses"].items()) {
@@ -121,7 +139,10 @@ static SearchRules load_rules(const char *path) {
     std::exit(1);
   }
 
-  auto j = nlohmann::json::parse(f);
+  // Allow // and /* */ comments in the config files (nlohmann extension; the
+  // 4th arg enables comment stripping - off by default in strict JSON).
+  auto j = nlohmann::json::parse(f, /*cb=*/nullptr, /*allow_exceptions=*/true,
+                                 /*ignore_comments=*/true);
   SearchRules rules;
 
   if (j.contains("level_ranges")) {

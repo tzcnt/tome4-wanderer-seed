@@ -147,7 +147,10 @@ inline const char *tree_source(const std::string &id) {
 // Unlock configuration loaded from JSON.
 struct UnlockConfig {
   std::string version; // game version string (e.g. "1.7.6")
-  bool is_dwarf = false;
+  // Character race, lowercased. Only "dwarf" and "undead" have race-specific
+  // effects on the Wanderer tree pool; every other value - "generic", a typo,
+  // or a missing field - is treated identically to "generic".
+  std::string race = "generic";
   std::unordered_map<std::string, bool> subclasses; // subclass name -> unlocked
   std::unordered_map<std::string, bool> trees;      // unlock key -> unlocked
   // addon name -> version string (for non-vanilla addons that contribute trees)
@@ -529,6 +532,18 @@ static const SubclassInfo all_subclasses[] = {
 static constexpr int NUM_SUBCLASSES =
     sizeof(all_subclasses) / sizeof(all_subclasses[0]);
 
+// Subclasses that belong to the game's "Wilder" class. Undead races disallow
+// the Wilder class at birth (data/birth/races/undead.lua: class = { Wilder =
+// "disallow" }), so for an undead Wanderer none of these subclasses contribute
+// talent trees to the roll pool - and since they are the only source of any
+// wild-gift tree, this is what removes every wild-gift tree from the pool.
+// (The race's forbid_nature attribute only blocks *using* nature talents, not
+// the tree roll, so it is deliberately not modeled here.)
+inline bool is_wilder_subclass(const std::string &name) {
+  return name == "Summoner" || name == "Wyrmic" || name == "Oozemancer" ||
+         name == "Stone Warden";
+}
+
 // Build the class and generic talent tree lists based on unlock config.
 inline TalentTreeLists build_talent_trees(const UnlockConfig &config) {
   TalentTreeLists result;
@@ -542,10 +557,16 @@ inline TalentTreeLists build_talent_trees(const UnlockConfig &config) {
       continue; // locked - no .def, skipped entirely
     }
 
+    // Undead cannot take the Wilder class, so its subclasses (the only source
+    // of wild-gift trees) are excluded from the pool entirely.
+    if (config.race == "undead" && is_wilder_subclass(sc.name)) {
+      continue;
+    }
+
     // Check not_on_random_boss filter
     // Stone Warden is the only one with this flag; included only for Dwarf
     if (sc.not_on_random_boss) {
-      if (std::string(sc.name) == "Stone Warden" && config.is_dwarf) {
+      if (std::string(sc.name) == "Stone Warden" && config.race == "dwarf") {
         // allowed
       } else {
         continue;
